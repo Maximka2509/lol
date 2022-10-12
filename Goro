@@ -1,0 +1,1353 @@
+--- Equip/UnEquip
+local LightningBolt = require(game.ReplicatedStorage.LightningBolt)
+local LightningSparks = require(game.ReplicatedStorage.LightningBolt.LightningSparks)
+
+local Tool = script.Parent
+
+Tool.Equipped:Connect(function()
+	Tool.Equip.Value = true
+end)
+
+Tool.Unequipped:Connect(function()
+	Tool.Equip.Value = false
+end)
+
+local UIS = game:GetService("UserInputService")
+local plr = game.Players.LocalPlayer
+local Mouse = plr:GetMouse()
+Player = game.Players.LocalPlayer
+local Track1 : Animation = script:WaitForChild("Anim01")
+Track1 = Player.Character:WaitForChild("Humanoid"):LoadAnimation(script.Anim01)
+local Track2 : Animation = script:WaitForChild("Anim02")
+Track2 = Player.Character:WaitForChild("Humanoid"):LoadAnimation(script.Anim02)
+local Track3 : Animation = script:WaitForChild("Anim03")
+Track3 = Player.Character:WaitForChild("Humanoid"):LoadAnimation(script.Anim03)
+local Track4 : Animation = script:WaitForChild("Anim04")
+Track4 = Player.Character:WaitForChild("Humanoid"):LoadAnimation(script.Anim04)
+local Track5 : Animation = script:WaitForChild("Anim05")
+Track5 = Player.Character:WaitForChild("Humanoid"):LoadAnimation(script.Anim05)
+local PrevWalkSpeed = nil
+local Tween = game:GetService("TweenService")
+local Gui = Player.PlayerGui:WaitForChild("Rumble_Skill_List".. Player.Name):WaitForChild("Frame")
+
+local CooldownEDur = 5
+local CanUseE = true
+local CooldownRDur = 5
+local CanUseR = true
+local CooldownXDur = 5
+local CanUseZ = true
+local CooldownZDur = 5
+local CanUseX = true
+local CooldownCDur = 5
+local CanUseC = true
+local CooldownDashDur = 0.2
+local CanDash = true
+
+local char = plr.Character
+local Size = 20
+
+local CooldownTDur = 5
+local CanUseT = true
+local HoldingT = false
+local BetweenTime = 0
+local AmountOfTP = 0
+local GoroFlightDistancePerTick = 35
+
+UIS.InputBegan:Connect(function(Input)
+	local char = plr.Character
+	if Input.KeyCode == Enum.KeyCode.Q and CanDash == true and plr.Character.Humanoid.FloorMaterial ~= nil and plr.Character.Humanoid.FloorMaterial ~= Enum.Material.Air and Tool.Active.Value == "None" then
+		local position = plr.Character.PrimaryPart.Position
+		local PartDash :Part = Instance.new("Part", workspace.Visuals)
+		PartDash.CFrame = char.PrimaryPart.CFrame
+		PartDash.CanCollide = false
+		PartDash.Anchored = true
+		PartDash.Transparency = 1
+		local A1 = Instance.new("Attachment", PartDash)
+		A1.WorldPosition = char.PrimaryPart.Position
+		A1.Visible = false
+		local A2 = Instance.new("Attachment", char.PrimaryPart)
+		A2.Visible = false
+		A2.Position = Vector3.new(0,0,1)
+		local PointLight = Instance.new("PointLight", A2)
+		local Sound = game.ReplicatedStorage.Goro.DashZap:Clone()
+		Sound.Parent = char.PrimaryPart
+		Sound:Play()
+		game.Debris:AddItem(Sound,1)
+		PointLight.Color = Color3.fromRGB(49, 235, 255)
+		PointLight.Range = 0
+		PointLight.Brightness = 30
+		game.Debris:AddItem(PointLight, 1)
+		game.Debris:AddItem(PartDash, 1)
+
+		local Distance = 15
+		Tween:Create(PointLight, TweenInfo.new(0.4), {Range = Distance, Brightness = 0}):Play()
+		wait()
+		if char.Humanoid.MoveDirection == Vector3.new(0,0,0) then
+			local RayCast = Ray.new(char.PrimaryPart.Position, char.PrimaryPart.CFrame.LookVector * Distance)
+			local PartDash, Pos = game.Workspace:FindPartOnRayWithIgnoreList(RayCast, {char, PartDash, workspace.Visuals})
+			char.PrimaryPart.CFrame = CFrame.new(Pos.X, Pos.Y, Pos.Z) * CFrame.fromOrientation(char.PrimaryPart.Orientation.X*3.14/180,char.PrimaryPart.Orientation.Y*3.14/180,char.PrimaryPart.Orientation.Z*3.14/180)
+		else
+			local RayCast = Ray.new(char.PrimaryPart.Position, char.Humanoid.MoveDirection * Distance)
+			local PartDash, Pos = game.Workspace:FindPartOnRayWithIgnoreList(RayCast, {char, PartDash, workspace.Visuals})
+			char.PrimaryPart.CFrame = CFrame.new(Pos.X, Pos.Y, Pos.Z) * CFrame.fromOrientation(char.PrimaryPart.Orientation.X*3.14/180,char.PrimaryPart.Orientation.Y*3.14/180,char.PrimaryPart.Orientation.Z*3.14/180)
+		end
+		script.Fire:FireServer("GoroDash", position)
+		position = nil
+
+		CanDash = false
+
+		local NewBolt = LightningBolt.new(A1, A2, 25)
+		NewBolt.CurveSize0, NewBolt.CurveSize1 = 1, 1
+		NewBolt.PulseSpeed = 10
+		NewBolt.Thickness = 1
+		NewBolt.PulseLength = 1
+		NewBolt.FadeLength = 0.45
+		NewBolt.RanNum = 10
+		NewBolt.Frequency = 5
+		NewBolt.Color = Color3.fromRGB(85, 145, 255)
+
+		local NewSparks = LightningSparks.new(NewBolt, 20)
+		wait(CooldownDashDur)
+		CanDash = true
+	elseif Input.KeyCode == Enum.KeyCode.E and CanUseE == true and Tool.Equip.Value == true and Tool.Active.Value == "None" then
+		Tool.Active.Value = "1LightningParalyze"
+		PrevWalkSpeed = Player.Character:WaitForChild("Humanoid").WalkSpeed
+		Gui:FindFirstChild(Tool.Active.Value).Frame.Size = UDim2.new(1, 0, 1, 0)
+		Player.Character:WaitForChild("Humanoid").WalkSpeed = 5
+		Track1:Play()
+		script.Fire:FireServer("holdE")
+		sphere = game.ReplicatedStorage.Goro.Radius:Clone()
+		local Weld = Instance.new("Weld", sphere)
+		Weld.Part0 = plr.Character.PrimaryPart
+		Weld.Part1 = sphere
+		sphere.Parent = game.Workspace.Visuals
+		sphere.Transparency = 1
+		Size = math.clamp(10, 10, 40)
+		delay(0.3, function()
+			Track1:AdjustSpeed(0)
+		end)
+		if Tool.Active.Value == "1LightningParalyze" then
+			for i = 1,320 do -- (Max Size - Min Size)*1/4
+				if Tool.Active.Value == "1LightningParalyze" then
+					Size = math.clamp(Size + 1/4, 20, 100)
+					Tween:Create(sphere.Mesh, TweenInfo.new(0.1), {Scale = Vector3.new(Size * 0.5, Size * 0.5, Size * 0.5)}):Play()
+					Tween:Create(sphere, TweenInfo.new(0.5), {Transparency = 0}):Play()
+					wait(0.05)
+				end
+			end
+		end
+	elseif Input.KeyCode == Enum.KeyCode.R and CanUseR == true and Tool.Equip.Value == true and Tool.Active.Value == "None" then
+		Tool.Active.Value = "2FlashSmash"
+		char.PrimaryPart.Anchored = true
+		LookAtMouse = true
+		Gui:FindFirstChild(Tool.Active.Value).Frame.Size = UDim2.new(1, 0, 1, 0)
+		Track2:Play()
+		script.Fire:FireServer("holdR")
+		delay(0.4, function()
+			Track2:AdjustSpeed(0)
+		end)
+		while LookAtMouse == true and char.PrimaryPart.Anchored == true do
+			plr.Character.PrimaryPart.CFrame = CFrame.lookAt(plr.Character.PrimaryPart.Position, Vector3.new(Mouse.Hit.p.X, plr.Character.PrimaryPart.Position.Y, Mouse.Hit.p.Z), Vector3.new(0,1,0))
+			wait()
+		end
+	elseif Input.KeyCode == Enum.KeyCode.Z and CanUseZ == true and Tool.Equip.Value == true and Tool.Active.Value == "None" then
+		Tool.Active.Value = "3ElThor"
+		char.PrimaryPart.Anchored = true
+		PrevWalkSpeed = Player.Character:WaitForChild("Humanoid").WalkSpeed
+		Gui:FindFirstChild(Tool.Active.Value).Frame.Size = UDim2.new(1, 0, 1, 0)
+		Player.Character:WaitForChild("Humanoid").WalkSpeed = 5
+		Track3:Play()
+		script.Fire:FireServer("holdZ")
+		Track3:AdjustSpeed(0)
+		LookAtMouse = true
+		while LookAtMouse == true do
+			plr.Character.PrimaryPart.CFrame = CFrame.lookAt(plr.Character.PrimaryPart.Position, Vector3.new(Mouse.Hit.p.X, plr.Character.PrimaryPart.Position.Y, Mouse.Hit.p.Z), Vector3.new(0,1,0))
+			wait()
+		end
+
+	elseif Input.KeyCode == Enum.KeyCode.X and CanUseX == true and Tool.Equip.Value == true and Tool.Active.Value == "None" then
+		Tool.Active.Value = "4LightningDragon"
+		char.PrimaryPart.Anchored = true
+		PrevWalkSpeed = Player.Character:WaitForChild("Humanoid").WalkSpeed
+		Gui:FindFirstChild(Tool.Active.Value).Frame.Size = UDim2.new(1, 0, 1, 0)
+		Player.Character:WaitForChild("Humanoid").WalkSpeed = 5
+		Track4:Play()
+		script.Fire:FireServer("holdX")
+		delay(0.15, function()
+			Track4:AdjustSpeed(0)
+		end)
+		LookAtMouse = true
+		while LookAtMouse == true do
+			plr.Character.PrimaryPart.CFrame = CFrame.lookAt(plr.Character.PrimaryPart.Position, Vector3.new(Mouse.Hit.p.X, plr.Character.PrimaryPart.Position.Y, Mouse.Hit.p.Z), Vector3.new(0,1,0))
+			wait()
+		end
+
+	elseif Input.KeyCode == Enum.KeyCode.C and CanUseC == true and Tool.Equip.Value == true and Tool.Active.Value == "None" then
+		Tool.Active.Value = "5GoroUlt"
+		PrevWalkSpeed = Player.Character:WaitForChild("Humanoid").WalkSpeed
+		Gui:FindFirstChild(Tool.Active.Value).Frame.Size = UDim2.new(1, 0, 1, 0)
+		Player.Character:WaitForChild("Humanoid").WalkSpeed = 5
+		Track5:Play()
+		script.Fire:FireServer("holdC")
+		delay(0.55, function()
+			Track5:AdjustSpeed(0)
+		end)
+		LookAtMouse = true
+		while LookAtMouse == true do
+			plr.Character.PrimaryPart.CFrame = CFrame.lookAt(plr.Character.PrimaryPart.Position, Vector3.new(Mouse.Hit.p.X, plr.Character.PrimaryPart.Position.Y, Mouse.Hit.p.Z), Vector3.new(0,1,0))
+			wait()
+		end
+	elseif Input.KeyCode == Enum.KeyCode.T and Tool.Active.Value == "None" and Tool.Equip.Value == true then
+		Tool.Active.Value = "6GoroFlight"
+		HoldingT = true
+		AmountOfTP = 0
+		BetweenTime = 0
+		local A3 = Instance.new("Attachment", plr.Character.PrimaryPart)
+		A3.Name = "AmongUsAttachmentSuspicious:O"
+		local Particle1 = game.ReplicatedStorage.Goro.Electric2:Clone()
+		Particle1.Parent = A3
+		Particle1.Enabled = true
+		local Particle2 = game.ReplicatedStorage.Goro.Flash:Clone()
+		Particle2.Parent = A3
+		Particle2.Enabled = true
+		Gui:FindFirstChild(Tool.Active.Value).Frame.Size = UDim2.new(1, 0, 1, 0)
+		script.Fire:FireServer("GoroFlight1", plr.Character)
+		for _, ItemF in pairs(plr.Character:GetDescendants()) do
+			if ItemF:IsA("MeshPart") or ItemF:IsA("Part") or ItemF:IsA("Union") then
+				if ItemF.Name ~= "HumanoidRootPart" then
+					ItemF.Transparency = ItemF.Transparency + 10
+					local ElectricParticle = game.ReplicatedStorage.Goro.ElectricParticle:Clone()
+					ElectricParticle.Enabled = true
+					ElectricParticle.Parent = ItemF	
+				end
+			end
+		end	
+		while HoldingT == true do
+			AmountOfTP = AmountOfTP + 1
+			plr.Character.PrimaryPart.Anchored = true
+			local ray = Ray.new(plr.Character.PrimaryPart.Position, CFrame.new(plr.Character.PrimaryPart.Position, Mouse.Hit.p).LookVector * GoroFlightDistancePerTick)
+			local HitPart, HitPos = game.Workspace:FindPartOnRayWithIgnoreList(ray, {game.Workspace.Visuals, plr.Character})
+			local position = plr.Character.PrimaryPart.Position
+			local PartDash :Part = Instance.new("Part", workspace.Visuals)
+			plr.Character.PrimaryPart.CFrame = CFrame.lookAt(plr.Character.PrimaryPart.Position, HitPos)
+			PartDash.CFrame = char.PrimaryPart.CFrame
+			PartDash.CanCollide = false
+			PartDash.Anchored = true
+			PartDash.Transparency = 1
+			local A1 = Instance.new("Attachment", PartDash)
+			A1.WorldPosition = char.PrimaryPart.Position
+			A1.Visible = false
+			local A2 = Instance.new("Attachment", char.PrimaryPart)
+			A2.Visible = false
+			A2.Position = Vector3.new(0,0,1)
+			local Particle1 = game.ReplicatedStorage.Goro.Electric2:Clone()
+			Particle1.Parent = A2
+			local Particle2 = game.ReplicatedStorage.Goro.Flash:Clone()
+			Particle2.Parent = A2
+			local PointLight = Instance.new("PointLight", A2)
+			local Sound = game.ReplicatedStorage.Goro.DashZap:Clone()
+			Sound.Parent = char.PrimaryPart
+			Sound:Play()
+			game.Debris:AddItem(Sound,1)
+			PointLight.Color = Color3.fromRGB(49, 235, 255)
+			PointLight.Range = 0
+			PointLight.Brightness = 30
+			game.Debris:AddItem(PointLight, 1)
+			game.Debris:AddItem(PartDash, 1)
+
+			local Distance = 15
+			Tween:Create(PointLight, TweenInfo.new(0.4), {Range = Distance, Brightness = 0}):Play()
+			wait()
+			Particle1:Emit(50)
+			Particle2:Emit(5)
+			char.PrimaryPart.CFrame = CFrame.new(HitPos.X, HitPos.Y + 4, HitPos.Z) * CFrame.fromOrientation(char.PrimaryPart.Orientation.X*3.14/180,char.PrimaryPart.Orientation.Y*3.14/180,char.PrimaryPart.Orientation.Z*3.14/180)
+			script.Fire:FireServer("GoroFlight2", position, HitPos)
+			position = nil
+			
+			local NewBolt = LightningBolt.new(A1, A2, 25)
+			NewBolt.CurveSize0, NewBolt.CurveSize1 = 1, 1
+			NewBolt.PulseSpeed = 10
+			NewBolt.Thickness = 1
+			NewBolt.PulseLength = 2
+			NewBolt.FadeLength = 0.45
+			NewBolt.RanNum = 10
+			NewBolt.Frequency = 5
+			NewBolt.Color = Color3.fromRGB(85, 145, 255)
+			NewBolt.MaxRadius = 4
+			local NewSparks = LightningSparks.new(NewBolt, 20)		
+			
+			wait(BetweenTime)
+			
+			if BetweenTime == 0 then
+				BetweenTime = 1
+			else
+				BetweenTime = math.clamp(BetweenTime - BetweenTime/2, 0.25, 2)
+			end
+		end
+	end
+end)
+
+UIS.InputEnded:Connect(function(Input)
+	if Input.KeyCode == Enum.KeyCode.E and CanUseE == true and Tool.Equip.Value == true and Tool.Active.Value == "1LightningParalyze" then
+		Player.Character:WaitForChild("1LightningParalyzeValue", 1200)
+		CanUseE = false
+		sphere.Mesh.Scale = Vector3.new(0,0,0)
+		Track1:AdjustSpeed(1)
+		wait(0.1)
+		sphere.Mesh.Scale = Vector3.new(0,0,0)
+		Tween:Create(sphere.Mesh, TweenInfo.new(0.5), {Scale = Vector3.new(Size, Size, Size)}):Play()
+		Tween:Create(sphere, TweenInfo.new(0.5), {Transparency = 1}):Play()
+		game.Debris:AddItem(sphere, 2)
+		script.Fire:FireServer("releaseE", plr.Character.PrimaryPart.CFrame, Size)
+		Size = 10
+		Tween:Create(Gui:FindFirstChild(Tool.Active.Value).Frame, TweenInfo.new(CooldownEDur, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+		Tool.Active.Value = "None"
+		Player.Character:WaitForChild("Humanoid").WalkSpeed = PrevWalkSpeed
+		wait(CooldownEDur)
+		CanUseE = true
+	elseif Input.KeyCode == Enum.KeyCode.R and CanUseR == true and Tool.Equip.Value == true and Tool.Active.Value == "2FlashSmash" then
+		LookAtMouse = false
+		Player.Character:WaitForChild("2FlashSmashValue", 1200)
+		CanUseR = false
+		Track2:AdjustSpeed(1)
+		local PrevCFrame =  plr.Character.PrimaryPart.CFrame
+		local ray = Ray.new(plr.Character.PrimaryPart.Position, CFrame.new(plr.Character.PrimaryPart.Position, Mouse.Hit.p).LookVector * 100)
+		local HitPart, HitPos = game.Workspace:FindPartOnRayWithIgnoreList(ray, {game.Workspace.Visuals, plr.Character})
+		wait(0.1)
+		delay(0.8, function()
+			char.PrimaryPart.Anchored = false
+		end)
+		script.Fire:FireServer("releaseR", PrevCFrame, HitPos, plr.Character.PrimaryPart.Position)
+		Tween:Create(Gui:FindFirstChild(Tool.Active.Value).Frame, TweenInfo.new(CooldownRDur, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+		Tool.Active.Value = "None"
+		wait(CooldownRDur)
+		CanUseR = true
+	elseif Input.KeyCode == Enum.KeyCode.Z and CanUseZ == true and Tool.Equip.Value == true and Tool.Active.Value == "3ElThor" then
+		Player.Character:WaitForChild("3ElThorValue", 1200)
+		CanUseZ = false
+		LookAtMouse = false
+		Track3:AdjustSpeed(1)
+		local ray = Ray.new(plr.Character.PrimaryPart.Position, CFrame.new(plr.Character.PrimaryPart.Position, Mouse.Hit.p).LookVector * 500)
+		local HitPart, HitPos = game.Workspace:FindPartOnRayWithIgnoreList(ray, {game.Workspace.Visuals, plr.Character})
+		delay(0.1, function()
+			char.PrimaryPart.Anchored = false
+			script.Fire:FireServer("releaseZ", HitPos)
+			Tween:Create(Gui:FindFirstChild(Tool.Active.Value).Frame, TweenInfo.new(CooldownZDur, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+			Tool.Active.Value = "None"
+			Player.Character:WaitForChild("Humanoid").WalkSpeed = PrevWalkSpeed
+			wait(CooldownZDur)
+			CanUseZ = true	
+		end)
+	elseif Input.KeyCode == Enum.KeyCode.X and CanUseX == true and Tool.Equip.Value == true and Tool.Active.Value == "4LightningDragon" then
+		Player.Character:WaitForChild("4LightningDragonValue", 1200)
+		CanUseX = false
+		LookAtMouse = false
+		Track4:AdjustSpeed(1)
+		local ray = Ray.new(plr.Character.PrimaryPart.Position, CFrame.new(plr.Character.PrimaryPart.Position, Mouse.Hit.p).LookVector * 500)
+		local HitPart, HitPos = game.Workspace:FindPartOnRayWithIgnoreList(ray, {game.Workspace.Visuals, plr.Character})
+		delay(0.1, function()
+			char.PrimaryPart.Anchored = false
+			script.Fire:FireServer("releaseX", HitPos)
+			Tween:Create(Gui:FindFirstChild(Tool.Active.Value).Frame, TweenInfo.new(CooldownXDur, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+			Tool.Active.Value = "None"
+			Player.Character:WaitForChild("Humanoid").WalkSpeed = PrevWalkSpeed
+			wait(CooldownXDur)
+			CanUseX = true	
+			delay(0.05, function()
+				Track4:AdjustSpeed(1)
+			end)
+		end)
+	elseif Input.KeyCode == Enum.KeyCode.C and CanUseC == true and Tool.Equip.Value == true and Tool.Active.Value == "5GoroUlt" then
+		Player.Character:WaitForChild("5GoroUltValue", 1200)
+		CanUseC = false
+		LookAtMouse = false
+		Track5:AdjustSpeed(1)
+		local ray = Ray.new(plr.Character.PrimaryPart.Position, CFrame.new(plr.Character.PrimaryPart.Position, Mouse.Hit.p).LookVector * 1200)
+		local HitPart, HitPos = game.Workspace:FindPartOnRayWithIgnoreList(ray, {game.Workspace.Visuals, plr.Character})
+		delay(0.1, function()
+			script.Fire:FireServer("releaseC", plr.Character.PrimaryPart.CFrame, HitPos)
+			Tween:Create(Gui:FindFirstChild(Tool.Active.Value).Frame, TweenInfo.new(CooldownCDur, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+			Tool.Active.Value = "None"
+			Player.Character:WaitForChild("Humanoid").WalkSpeed = PrevWalkSpeed
+			wait(CooldownCDur)
+			CanUseC = true	
+		end)
+	elseif Input.KeyCode == Enum.KeyCode.T and Tool.Active.Value == "6GoroFlight" and Tool.Equip.Value == true and CanUseT == true then
+		HoldingT = false
+		script.Fire:FireServer("GoroFlight3", plr.Character)
+		for _, ItemF in pairs(plr.Character:GetDescendants()) do
+			if ItemF.Name ~= "HumanoidRootPart" then
+				if ItemF:IsA("MeshPart") or ItemF:IsA("Part") or ItemF:IsA("Union") then
+				ItemF.Transparency = ItemF.Transparency - 10
+				if ItemF:FindFirstChild("ElectricParticle") then
+					ItemF.ElectricParticle:Destroy()
+				end
+			elseif ItemF.Name == "AmongUsAttachmentSuspicious:O" then
+				ItemF:FindFirstChild("Flash").Enabled = false
+				ItemF:FindFirstChild("Electric2").Enabled = false
+				game.Debris:AddItem(ItemF, 1)
+			end
+			end
+		end	
+		delay(0.4, function()
+			Tween:Create(Gui:FindFirstChild(Tool.Active.Value).Frame, TweenInfo.new(CooldownCDur, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+			CanUseT = false
+			Tool.Active.Value = "None"
+			plr.Character.PrimaryPart.Anchored = false
+			BetweenTime = 0
+			AmountOfTP = 0
+			wait(CooldownTDur)
+			CanUseT = true
+		end)
+	end
+end)
+
+--------------------------------------------------------------------------------------------------------------------------------------
+local IsHitting = false
+local Proto1 = nil
+local Proto2 = nil
+local Proto3 = nil
+local TweenService = game:GetService("TweenService")
+local ChargeTimeE = 0.3
+local ChargeTimeR = 0.5
+local ChargeTimeZ = 0.4
+local ChargeTimeX = 0.2
+local ChargeTimeC = 0.4
+local Timer = nil
+local UltCharging = false
+local UltSize = 10
+
+script.Parent.OnServerEvent:Connect(function(plr, val, Item1, Item2, Item3)	
+	if val == "holdE" then
+		Timer = ChargeTimeE
+		for i = 1,ChargeTimeE*10 do
+			Timer = Timer - 0.1
+			wait(0.1)
+		end
+		local Value = Instance.new("StringValue")
+		Value.Name = "1LightningParalyzeValue"
+		Value.Parent = plr.Character
+		Proto2 = Value
+	elseif val == "releaseE" then
+		IsHitting = true
+		game.ReplicatedStorage.FireClientEvent:FireAllClients("LightningCloud", plr.Character.RightHand)
+		local Projectile = game.ReplicatedStorage.Goro.Radius:Clone()
+		local Item22 = math.clamp(Item2, 20, 100)
+		Projectile.Size = Vector3.new(Item22, Item22, Item22)
+		Projectile.Transparency = 1
+		Projectile.Anchored = true
+		Projectile.Parent = workspace.Visuals
+		Projectile.Sound:Play()
+		Projectile.Sound.TimePosition = 0.7
+		game.Debris:AddItem(Proto2, 2)
+		Proto2 = nil
+		Projectile.CFrame = Item1
+		Projectile.Touched:Connect(function(hit)
+			if hit.Parent:FindFirstChild("Humanoid") and IsHitting == true then
+				if hit.Parent.Name ~= plr.Name and not hit.Parent:FindFirstChild("AlreadyHitLightningParalyze".. plr.Name) then
+					local Check = Instance.new("IntValue", hit.Parent)
+					Check.Name = "AlreadyHitLightningParalyze".. plr.Name
+					game.Debris:AddItem(Check ,1)
+					hit.Parent.PrimaryPart.Anchored = false
+					local B2V = Instance.new("BodyPosition",hit.Parent.PrimaryPart)
+					B2V.Position = hit.Parent.PrimaryPart.Position + Vector3.new(0,6,0)
+					B2V.MaxForce = Vector3.new(150000,150000,150000)
+					wait(math.random(1,3)/10)
+					hit.Parent.Humanoid:TakeDamage(10)
+					game.Debris:AddItem(B2V, 0.5)
+					game.ReplicatedStorage.FireClientEvent:FireAllClients("LightningCloud", hit.Parent.Head)
+				end
+			end
+		end)
+		wait(0.3)
+		IsHitting = false
+		game.Debris:AddItem(Projectile, 0.1)
+	elseif val == "holdR" then
+		Timer = ChargeTimeR
+		for i = 1,ChargeTimeR*10 do
+			Timer = Timer - 0.1
+			wait(0.1)
+		end
+		local Value = Instance.new("StringValue")
+		Value.Name = "2FlashSmashValue"
+		Value.Parent = plr.Character
+		Proto2 = Value
+	elseif val == "releaseR" then
+		Proto2:Destroy()
+		Proto2 = nil
+		plr.Character.PrimaryPart.CFrame = CFrame.new(Item2.X, Item2.Y + 4, Item2.Z) * CFrame.fromOrientation(Item1.Rotation.X*3.14/180,Item1.Rotation.Y*3.14/180,Item1.Rotation.Z*3.14/180)
+		game.ReplicatedStorage.FireClientEvent:FireAllClients("GoroDash", plr, Item3, "ForAll")
+		wait(0.4)
+		local Projectile = game.ReplicatedStorage.Goro.Radius:Clone()
+		Projectile.Size = Vector3.new(45,45,45)
+		Projectile.Transparency = 1
+		Projectile.Mesh:Destroy()
+		Projectile.Anchored = true
+		Projectile.Parent = workspace.Visuals
+		Projectile.CFrame = CFrame.new(Item2)
+		Projectile.Touched:Connect(function(hit)
+			if hit.Parent:FindFirstChild("Humanoid") then
+				if hit.Parent.Name ~= plr.Name and not hit.Parent:FindFirstChild("AlreadyHitFlashSmash".. plr.Name) then
+					local Check = Instance.new("IntValue", hit.Parent)
+					Check.Name = "AlreadyHitFlashSmash".. plr.Name
+					game.Debris:AddItem(Check ,1)
+					hit.Parent.PrimaryPart.Anchored = false
+					local B2V = Instance.new("BodyVelocity",hit.Parent.PrimaryPart)
+					B2V.Velocity = CFrame.new(Projectile.Position, hit.Parent.HumanoidRootPart.Position).LookVector * 30 + Projectile.CFrame.UpVector * 10
+					B2V.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+					hit.Parent.Humanoid:TakeDamage(20)
+					game.Debris:AddItem(B2V, 0.64)
+					game.ReplicatedStorage.FireClientEvent:FireAllClients("Electrify", hit.Parent)
+				end
+			end
+		end)
+		game.Debris:AddItem(Projectile, 0.6)
+	elseif val == "holdZ" then
+		Timer = ChargeTimeZ
+		for i = 1,ChargeTimeZ*10 do
+			Timer = Timer - 0.1
+			wait(0.1)
+		end
+		local Value = Instance.new("StringValue")
+		Value.Name = "3ElThorValue"
+		Value.Parent = plr.Character
+		Proto1 = Value
+	elseif val == "releaseZ" then
+		Proto1:Destroy()
+		Proto1 = nil
+		game.ReplicatedStorage.FireClientEvent:FireAllClients("ElThor", Item1, plr)
+		for i = 1,10 do
+			local Projectile = game.ReplicatedStorage.Goro.Radius:Clone()
+			Projectile.Size = Vector3.new(80,80,80)
+			Projectile.Transparency = 1
+			Projectile.Mesh:Destroy()
+			Projectile.Anchored = true
+			Projectile.Parent = workspace.Visuals
+			Projectile.CFrame = CFrame.new(Item1)
+			Projectile.Touched:Connect(function(hit)
+				if hit.Parent:FindFirstChild("Humanoid") then
+					if hit.Parent.Name ~= plr.Name and not hit.Parent:FindFirstChild("AlreadyHitElThor"..i.. plr.Name) then
+						local Check = Instance.new("IntValue", hit.Parent)
+						Check.Name = "AlreadyHitElThor"..i.. plr.Name
+						game.Debris:AddItem(Check, 1)
+						hit.Parent.PrimaryPart.Anchored = false
+						local B2V = Instance.new("BodyVelocity",hit.Parent.PrimaryPart)
+						B2V.Velocity = CFrame.new(Projectile.Position, Vector3.new(hit.Parent.HumanoidRootPart.Position.X,Projectile.Position.Y,hit.Parent.HumanoidRootPart.Position.Z)).LookVector * 60 + Projectile.CFrame.UpVector * 20
+						B2V.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+						hit.Parent.Humanoid:TakeDamage(5)
+						game.Debris:AddItem(B2V, 0.3)
+						game.ReplicatedStorage.FireClientEvent:FireAllClients("Electrify", hit.Parent)
+					end
+				end
+			end)
+			game.Debris:AddItem(Projectile, 0.3)
+			wait(0.2)
+		end
+	elseif val == "holdX" then
+		Timer = ChargeTimeX
+		for i = 1,ChargeTimeX*10 do
+			Timer = Timer - 0.1
+			wait(0.1)
+		end
+		local Value = Instance.new("StringValue")
+		Value.Name = "4LightningDragonValue"
+		Value.Parent = plr.Character
+		Proto1 = Value
+	elseif val == "releaseX" then
+		game.Debris:AddItem(Proto1)
+		Proto1 = nil
+		local ray = Ray.new(Item1 + Vector3.new(0, 50, 0), Item1 - Vector3.new(0, 50000, 0))
+		local HitPart, HitPos = game.Workspace:FindPartOnRayWithIgnoreList(ray, {game.Workspace.Visuals, plr.Character})
+		local speed = math.clamp((plr.Character.PrimaryPart.CFrame.p - HitPos).Magnitude/10, 1, 8)
+		local duration = (plr.Character.PrimaryPart.Position - HitPos).Magnitude / speed
+		game.ReplicatedStorage.FireClientEvent:FireAllClients("LightningDragon", plr.Character.PrimaryPart, CFrame.new(HitPos), speed)
+		delay(duration/20, function()
+			local Projectile = game.ReplicatedStorage.Goro.Radius:Clone()
+			Projectile.Size = Vector3.new(50,50,50)
+			Projectile.Transparency = 1
+			Projectile.Mesh:Destroy()
+			Projectile.Anchored = true
+			Projectile.Parent = workspace.Visuals
+			Projectile.CFrame = CFrame.new(Item1)
+			Projectile.Touched:Connect(function(hit)
+				if hit.Parent:FindFirstChild("Humanoid") then
+					if hit.Parent.Name ~= plr.Name and not hit.Parent:FindFirstChild("AlreadyHitLightningDragon".. plr.Name) then
+						local Check = Instance.new("IntValue", hit.Parent)
+						Check.Name = "AlreadyHitLightningDragon".. plr.Name
+						game.Debris:AddItem(Check ,1)
+						hit.Parent.PrimaryPart.Anchored = false
+						local B2V = Instance.new("BodyVelocity",hit.Parent.PrimaryPart)
+						B2V.Velocity = CFrame.new(Projectile.Position, hit.Parent.HumanoidRootPart.Position).LookVector * 60 + Projectile.CFrame.UpVector * 10
+						B2V.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+						hit.Parent.Humanoid:TakeDamage(20)
+						game.Debris:AddItem(B2V, 0.3)
+						game.ReplicatedStorage.FireClientEvent:FireAllClients("Electrify", hit.Parent)
+					end
+				end
+			end)
+			game.Debris:AddItem(Projectile, 0.6)
+		end)
+	elseif val == "holdC" then
+		local prevVal = plr.Character:FindFirstChild("5GoroUltValue")
+		if prevVal then
+			prevVal:Destroy()
+		end
+		local ThunderBomb = game.ReplicatedStorage.Goro.ThunderBomb:Clone()
+		ThunderBomb.Parent = game.Workspace.Visuals
+		ThunderBomb.Position = plr.Character.PrimaryPart.Position + Vector3.new(0, 150, 0)
+		ThunderBomb.Inner.Position = plr.Character.PrimaryPart.Position + Vector3.new(0, 150, 0)
+		ThunderBomb.Name = tostring(math.random(0,1000)).. "#" .. plr.Name.. "RaigoUltimate"
+		Proto1 = ThunderBomb
+		UltCharging = true
+		local BV = Instance.new("BodyPosition", plr.Character.PrimaryPart)
+		BV.MaxForce = Vector3.new(1000000000,7000000000,100000000)
+		BV.Position = Vector3.new(plr.Character.PrimaryPart.Position.X, plr.Character.PrimaryPart.Position.Y + 45, plr.Character.PrimaryPart.Position.Z)
+		Proto3 = BV
+		game.ReplicatedStorage.FireClientEvent:FireAllClients("Raigo", ThunderBomb, plr.Character.PrimaryPart.Position + Vector3.new(0, 70, 0), BV)
+		wait(0.4)
+		Timer = ChargeTimeC
+		for i = 1,ChargeTimeC*10 do
+			Timer = Timer - 0.05
+			wait(0.1)
+		end
+		local Value = Instance.new("StringValue")
+		Value.Name = "5GoroUltValue"
+		Value.Parent = plr.Character
+		Proto2 = Value
+		while UltCharging == true do
+			if UltSize < 150 then
+				UltSize = UltSize + 1
+				ThunderBomb.Value.Value = UltSize
+			end
+			wait(0.05)
+		end
+	elseif val == "releaseC" then
+		UltCharging = false
+		local Hitting = true
+		local ray = Ray.new(plr.Character.PrimaryPart.Position, CFrame.new(plr.Character.PrimaryPart.Position, Item2).LookVector * 1200)
+		local HitPart, HitPos = game.Workspace:FindPartOnRayWithIgnoreList(ray, {game.Workspace.Visuals, plr.Character})
+		local Distance = (Item2 - Proto1.Position).Magnitude/175 * math.clamp(Proto1.Value.Value/75, 0.75, math.huge)
+		Proto1.Value.Value = -1
+		Proto1.Size = Vector3.new(1.05 * UltSize, 1.05 * UltSize, 1.05 * UltSize)
+		Proto1.Inner.Size = Vector3.new(UltSize, UltSize, UltSize)
+		game.ReplicatedStorage.FireClientEvent:FireAllClients("RaigoThrow", Proto1, HitPos, Distance, HitPart)
+		game.Debris:AddItem(Proto1, Distance + 5)
+		Proto1 = nil
+		Proto2:Destroy()
+		Proto2 = nil
+		delay(0.4, function()
+			Proto3:Destroy()
+			Proto3 = nil
+		end)
+		wait(Distance)
+		local Projectile = game.ReplicatedStorage.Goro.Radius:Clone()
+		Projectile.Size = Vector3.new(UltSize * 2.2,UltSize * 2.2, UltSize * 2.2)
+		Projectile.Transparency = 1
+		Projectile.Mesh:Destroy()
+		Projectile.Anchored = true
+		Projectile.Parent = workspace.Visuals
+		Projectile.CFrame = CFrame.new(HitPos)
+		Projectile.Touched:Connect(function(hit)
+			if hit.Parent:FindFirstChild("Humanoid") and Hitting == true then
+				if hit.Parent.Name ~= plr.Name and not hit.Parent:FindFirstChild("AlreadyHitLightningRaigoUlt".. plr.Name) then
+					local Check = Instance.new("IntValue", hit.Parent)
+					Check.Name = "AlreadyHitLightningRaigoUlt".. plr.Name
+					game.Debris:AddItem(Check ,1)
+					hit.Parent.PrimaryPart.Anchored = false
+					local B2V = Instance.new("BodyVelocity",hit.Parent.PrimaryPart)
+					B2V.Velocity = CFrame.new(Projectile.Position, hit.Parent.HumanoidRootPart.Position).LookVector * Projectile.Size.X/1.5 + Projectile.CFrame.UpVector * Projectile.Size.X/1.5
+					B2V.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+					hit.Parent.Humanoid:TakeDamage(20)
+					game.Debris:AddItem(B2V, 0.64)
+					game.ReplicatedStorage.FireClientEvent:FireAllClients("Electrify", hit.Parent)
+				end
+			end
+		end)
+		UltSize = 10
+		game.Debris:AddItem(Projectile, 2)
+		wait(2)
+		Hitting = false
+	elseif val == "GoroDash" then
+		game.ReplicatedStorage.FireClientEvent:FireAllClients("GoroDash", plr, Item1, "NotForAll")
+	elseif val == "GoroFlight1" then
+		game.ReplicatedStorage.FireClientEvent:FireAllClients("GoroFlight1", plr.Character)
+	elseif val == "GoroFlight2" then
+		game.ReplicatedStorage.FireClientEvent:FireAllClients("GoroFlight2", Item1, Item2)
+	elseif val == "GoroFlight3" then
+		game.ReplicatedStorage.FireClientEvent:FireAllClients("GoroFlight3", plr.Character)
+	end
+end)
+
+-----
+
+local GoroRemote = game.ReplicatedStorage.FireClientEvent
+local Tween = game:GetService("TweenService")
+local plr = game.Players.LocalPlayer
+
+local Crator = require(game.ReplicatedStorage.Goro.CircularCratorScript)
+local LightningBolt = require(game.ReplicatedStorage.LightningBolt)
+local LightningSparks = require(game.ReplicatedStorage.LightningBolt.LightningSparks)
+local LightningExplosion = require(game.ReplicatedStorage.LightningBolt.LightningExplosion)
+
+local Bezier_Module = {}
+function Bezier_Module:QuadraticBezier(Time,Point0,Point1,Point2)
+	return (1-Time)^2*Point0+2*(1-Time)*Time*Point1+Time^2*Point2;
+end;
+
+GoroRemote.OnClientEvent:Connect(function(Item1, Item2, Item3, Item4, Item5, Item6)
+	if Item1 == "GoroDash" and Item3 ~= nil then
+		if Item2.Name ~= plr.Name and Item4 == "NotForAll" then
+			local PartDash = Instance.new("Part", game.Workspace.Visuals)
+			PartDash.Anchored = true
+			local A1 = Instance.new("Attachment", PartDash)
+			A1.WorldPosition = Item3
+			A1.Visible = false
+			local A2 = Instance.new("Attachment", Item2.Character.PrimaryPart)
+			A2.Position = Vector3.new(0,0,1)
+			--A2.WorldPosition = A2O
+			A2.Visible = false
+			local PointLight = Instance.new("PointLight", A2)
+			local Sound = game.ReplicatedStorage.Goro.DashZap:Clone()
+			Sound.Parent = Item2.Character.PrimaryPart
+			Sound:Play()
+			game.Debris:AddItem(Sound,1)
+			PointLight.Color = Color3.fromRGB(49, 235, 255)
+			PointLight.Range = 0
+			PointLight.Brightness = 30
+			PartDash.CanCollide = false
+			PartDash.Transparency = 1
+			game.Debris:AddItem(PointLight, 1)
+			game.Debris:AddItem(PartDash, 2)
+			PartDash.Anchored = true
+			local Distance = 15
+			Tween:Create(PointLight, TweenInfo.new(0.25), {Range = Distance, Brightness = 0}):Play()
+			wait()
+			local NewBolt = LightningBolt.new(A1, A2, 25)
+			NewBolt.CurveSize0, NewBolt.CurveSize1 = 1, 1
+			NewBolt.PulseSpeed = 10
+			NewBolt.Thickness = 1
+			NewBolt.PulseLength = 1
+			NewBolt.FadeLength = 0.45
+			NewBolt.RanNum = 10
+			NewBolt.Frequency = 5
+			NewBolt.Color = Color3.fromRGB(85, 145, 255)
+
+			local NewSparks = LightningSparks.new(NewBolt, 20)
+		elseif Item4 == "ForAll" then
+			local PartDash = Instance.new("Part", game.Workspace.Visuals)
+			PartDash.Size = Vector3.new(0,0,0)
+			PartDash.Anchored = true
+			local A1 = Instance.new("Attachment", PartDash)
+			A1.WorldPosition = Item3
+			A1.Visible = false
+			local A2 = Instance.new("Attachment", Item2.Character.PrimaryPart)
+			A2.Position = Vector3.new(0,0,1)
+			--A2.WorldPosition = A2O
+			A2.Visible = false
+			local PointLight = Instance.new("PointLight", A2)
+			local Sound = game.ReplicatedStorage.Goro.DashZap:Clone()
+			Sound.Parent = Item2.Character.PrimaryPart
+			Sound:Play()
+			game.Debris:AddItem(Sound,1)
+			PointLight.Color = Color3.fromRGB(49, 235, 255)
+			PointLight.Range = 0
+			PointLight.Brightness = 30
+			PartDash.CanCollide = false
+			PartDash.Transparency = 1
+			game.Debris:AddItem(PointLight, 1)
+			game.Debris:AddItem(PartDash, 2)
+			PartDash.Anchored = true
+			local Distance = 15
+			Tween:Create(PointLight, TweenInfo.new(0.25), {Range = Distance, Brightness = 0}):Play()
+			wait()
+			local NewBolt = LightningBolt.new(A1, A2, 25)
+			NewBolt.CurveSize0, NewBolt.CurveSize1 = 1, 1
+			NewBolt.PulseSpeed = 10
+			NewBolt.Thickness = 1
+			NewBolt.PulseLength = 1
+			NewBolt.FadeLength = 0.45
+			NewBolt.RanNum = 10
+			NewBolt.Frequency = 5
+			NewBolt.Color = Color3.fromRGB(85, 145, 255)
+
+			local NewSparks = LightningSparks.new(NewBolt, 40)
+			wait(0.4)
+			local BoltSound = game.ReplicatedStorage.Goro.lightning_bolt:Clone()
+			BoltSound.Parent = Item2.Character.PrimaryPart
+			BoltSound:Play()
+			game.Debris:AddItem(BoltSound, 5)
+			local ray = Ray.new(Item2.Character.PrimaryPart.Position, Item2.Character.PrimaryPart.Position - Vector3.new(0, 40, 0))
+			local HitPart, HitPos = game.Workspace:FindPartOnRayWithIgnoreList(ray, {game.Workspace.Visuals, plr.Character, Item2.Character})
+			if HitPart then
+				local Pr = game.ReplicatedStorage.Goro.Radius:Clone()
+				Pr.Size = Vector3.new(6,6,6)
+				Pr.Transparency = 1
+				Pr.Attachment.Dust.Parent = Pr
+				Pr.Anchored = true
+				Pr.Parent = game.Workspace.Visuals
+				Pr.CanCollide = false
+				Pr.Position = HitPos
+				Pr.Dust.Color = ColorSequence.new(HitPart.Color)
+				Pr.Dust.Size = NumberSequence.new(5,45)
+				Pr.Dust:Emit(15)
+				Pr.Dust.Enabled = false
+				Pr["Rock Smash Sound effect"]:Play()
+				Pr.Name = "qfqjfsafeqwfefwfqfqfq"
+				delay(0.6, function()
+					Pr.Dust.Enabled = false
+				end)
+				game.Debris:AddItem(Pr,2.5)
+			end
+			Crator.Ground(Item2.Character.PrimaryPart.CFrame, 39, 40, 3, 28, 4, 4, false)
+			local Ring = game.ReplicatedStorage.Goro.Ring:Clone()
+			Ring.Parent = game.Workspace.Visuals
+			Ring.Position = Item2.Character.PrimaryPart.Position + Vector3.new(0, 20, 0)
+			game.Debris:AddItem(Ring, 0.55)
+			Tween:Create(Ring, TweenInfo.new(0.55, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = Vector3.new(70,4,70), Transparency = 1, Position = Ring.Position - Vector3.new(0, 20, 0)}):Play()
+			local Explosion = LightningExplosion.new(Item2.Character.PrimaryPart.Position, 2, 17, Color3.new(0.305882, 0.643137, 1), Color3.new(0.388235, 0.686275, 1))
+			local PointLight2 = Instance.new("PointLight", Item2.Character.PrimaryPart)
+			PointLight2.Color = Color3.fromRGB(49, 235, 255)
+			PointLight2.Range = 10
+			PointLight2.Brightness = 100
+			game.Debris:AddItem(PointLight2, 2)
+			Tween:Create(PointLight2, TweenInfo.new(1, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Range = 60, Brightness = 0}):Play()
+			local ForceField = game.ReplicatedStorage.Goro.Radius:Clone()
+			ForceField.CFrame = CFrame.new(Item2.Character.PrimaryPart.Position)
+			ForceField.Name = "fqfeda"
+			ForceField.Anchored = true
+			ForceField.Transparency = -2
+			ForceField.Parent = game.Workspace.Visuals
+			ForceField.Size = Vector3.new(0,0,0)
+			Tween:Create(ForceField, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Transparency = 1}):Play()
+			Tween:Create(ForceField.Mesh, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Scale = Vector3.new(30,30,30)}):Play()
+			game.Debris:AddItem(ForceField, 1)
+		end
+	elseif Item1 == "Electrify" and Item2 ~= nil then
+		for _, BodyPart in pairs(Item2:GetDescendants()) do
+			if BodyPart:IsA("Part") or BodyPart:IsA("MeshPart") or BodyPart:IsA("Union") then
+				local Electric = game.ReplicatedStorage.Goro.ElectricParticle:Clone()
+				Electric.Parent = BodyPart
+				Electric:Emit(15)
+				if BodyPart.Name == "HumanoidRootPart" then
+					local SFX = game.ReplicatedStorage.Goro.Cloud2.electricity1:Clone()
+					SFX.Parent = BodyPart
+					SFX:Play()
+					game.Debris:AddItem(SFX, 2)
+				end
+				game.Debris:AddItem(Electric, 4)
+				delay(0.3, function()
+					local Electric = game.ReplicatedStorage.Goro.ElectricParticle:Clone()
+					Electric.Parent = BodyPart
+					Electric:Emit(15)
+					game.Debris:AddItem(Electric, 4)
+				end)
+			end
+		end	
+	elseif Item1 == "LightningCloud" and Item2 ~= nil then
+		local Cloud = game.ReplicatedStorage.Goro.Cloud2:Clone()
+		Cloud.Parent = game.Workspace.Visuals
+		Cloud.Position = Item2.Parent.HumanoidRootPart.Position + Vector3.new(0, math.random(20,30), 0)
+		Cloud.Orientation = Vector3.new(0, math.random(-360,360), 0)
+		local rando = math.random(5,9)/10
+		Tween:Create(Cloud, TweenInfo.new(rando, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false), {Size = Vector3.new(10.598, 5.292, 14.211)}):Play()
+		delay(rando, function()
+			Tween:Create(Cloud, TweenInfo.new(rando, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false), {Size = Vector3.new(20, 3, 19), Transparency = 1}):Play()
+		end)
+		game.Debris:AddItem(Cloud, 3.2)
+		local A1 = Instance.new("Attachment", Item2)
+		game.Debris:AddItem(A1,2)
+		local A2 = Cloud.A2
+		local LightningBolt = require(game.ReplicatedStorage.LightningBolt)
+
+		local NewBolt = LightningBolt.new(A1, A2, 25)
+		NewBolt.CurveSize0, NewBolt.CurveSize1 = 1, 1
+		NewBolt.PulseSpeed = 10
+		NewBolt.Thickness = 1
+		NewBolt.PulseLength = 3
+		NewBolt.FadeLength = 0.5
+		NewBolt.RanNum = 10
+		NewBolt.Frequency = 5
+		NewBolt.MaxRadius = 3
+		NewBolt.Color = Color3.fromRGB(85, 145, 255)
+		local Pointlight = game.ReplicatedStorage.Goro.LightHit:Clone()
+		Pointlight.Parent = Item2.Parent.HumanoidRootPart
+		game.Debris:AddItem(Pointlight, 1)
+		Tween:Create(Pointlight, TweenInfo.new(1), {Brightness = 0, Range = 30}):Play()
+		if Item2.Name ~= "RightHand" then
+			Cloud["Lightning Strike"]:Play()
+			Cloud.electricity1:Play()
+
+			Cloud.electricity2:Play()
+			for _, BodyPart in pairs(Item2.Parent:GetDescendants()) do
+				if BodyPart:IsA("Part") or BodyPart:IsA("MeshPart") or BodyPart:IsA("Union") then
+					local Electric = game.ReplicatedStorage.Goro.ElectricParticle:Clone()
+					Electric.Parent = BodyPart
+					Electric:Emit(15)
+					game.Debris:AddItem(Electric, 4)
+					delay(0.3, function()
+						local Electric = game.ReplicatedStorage.Goro.ElectricParticle:Clone()
+						Electric.Parent = BodyPart
+						Electric:Emit(15)
+						game.Debris:AddItem(Electric, 4)
+					end)
+				end
+			end	
+		end
+	elseif Item1 == "ElThor" then
+		local part = Instance.new("Part", game.Workspace.Visuals)
+		part.Anchored = true
+		part.Transparency = 1
+		part.Size = Vector3.new(0,0,0)
+		part.CanCollide = false
+		part.CFrame = CFrame.new(Item2)
+		local A1 = Instance.new("Attachment", part)
+		A1.WorldPosition = Item2 + Vector3.new(0, 85, 0)
+		local A2 = Instance.new("Attachment", part)
+		for i = 1,10 do
+			local Cloud = game.ReplicatedStorage.Goro.Cloud2:Clone()
+			Cloud.Name = Item3.Name.. "ElThorCloud"
+			Cloud.Parent = game.Workspace.Visuals
+			Cloud.Transparency = 0
+			Cloud.Size = Vector3.new(0,0,0)
+			Cloud.Position = Item2 + Vector3.new(math.random(-50,50),math.random(80,100),math.random(-50,50))
+			Cloud.Orientation = Vector3.new(0, math.random(-360,360), 0)
+			local dur = math.random(5,7)/10
+			Tween:Create(Cloud, TweenInfo.new(dur, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, math.random(1,5)/10), {Size = Vector3.new(math.random(50,80),math.random(15,25),math.random(50,80))}):Play()
+			delay(dur * 2, function()
+				Tween:Create(Cloud, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, math.random(1,5)/10), {Size = Vector3.new(130,25,130), Transparency = 1}):Play()
+				game.Debris:AddItem(Cloud, 1)
+			end)
+			local Cloud2 = game.ReplicatedStorage.Goro.Cloud2:Clone()
+			Cloud2.Name = Item3.Name.. "ElThorCloud"
+			Cloud2.Parent = game.Workspace.Visuals
+			Cloud2.Transparency = 0
+			Cloud2.Size = Vector3.new(0,0,0)
+			Cloud2.Position = Item2 + Vector3.new(math.random(-50,50),math.random(85,100),math.random(-50,50))
+			Cloud2.Orientation = Vector3.new(0, math.random(-360,360), 0)
+			local dur2 = math.random(5,7)/10
+			Tween:Create(Cloud2, TweenInfo.new(dur, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, math.random(1,5)/10), {Size = Vector3.new(math.random(50,80),math.random(15,25),math.random(50,80))}):Play()
+			delay(dur2 * 2, function()
+				Tween:Create(Cloud2, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, math.random(1,5)/10), {Size = Vector3.new(130,25,130), Transparency = 1}):Play()
+				game.Debris:AddItem(Cloud2, 1)
+			end)
+			delay(i/10, function()
+				Crator.Ground(CFrame.new(Item2), 10 + (i * 8), 10 + (i * 8), math.clamp(i, 1, 5), math.clamp(i * 4, 8, 20), 3, 3, false)
+				local Explosion = LightningExplosion.new(Item2, 2, 5, Color3.new(0.305882, 0.643137, 1), Color3.new(0.388235, 0.686275, 1))
+				for i2 = 1,2 do
+					local Ring = game.ReplicatedStorage.Goro.Ring:Clone()
+					Ring.Parent = game.Workspace.Visuals
+					Ring.Position = A1.WorldPosition
+					Tween:Create(Ring, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = Vector3.new(80, 3.5, 80), Transparency = 1, Position = Item2}):Play()
+					game.Debris:AddItem(Ring, 0.5)
+					local sound = game.ReplicatedStorage.Goro.lightning_bolt:Clone()
+					local ForceField = game.ReplicatedStorage.Goro.Radius:Clone()
+					sound.Parent = ForceField
+					if i2 == 2 then
+						sound:Play()
+						ForceField["Rock Smash Sound effect"]:Play()	
+					end
+					ForceField.CFrame = CFrame.new(Item2)
+					ForceField.Anchored = true
+					ForceField.Parent = game.Workspace.Visuals
+					ForceField.Attachment.Position = Vector3.new(0, 5, 0)
+					ForceField.Size = Vector3.new(0,0,0)
+					Tween:Create(ForceField, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Transparency = 1}):Play()
+					Tween:Create(ForceField.Mesh, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Scale = Vector3.new(40,40,40), VertexColor = Vector3.new(0.5, 1.6, 2)}):Play()
+					Tween:Create(ForceField.Attachment.PointLight, TweenInfo.new(0.6), {Range = 60, Brightness = 0}):Play()
+					game.Debris:AddItem(ForceField, 1.5)
+					
+					local NewBolt = LightningBolt.new(A1, A2, 7)
+					NewBolt.CurveSize0, NewBolt.CurveSize1 = 1, 1
+					NewBolt.PulseSpeed = 10
+					NewBolt.Thickness = 2
+					NewBolt.MinTransparency = 0
+					NewBolt.MaxTransparency = 0.5
+					NewBolt.PulseLength = 3
+					NewBolt.FadeLength = 0.5
+					NewBolt.MaxRadius = 20
+					if i == 1 then
+						NewBolt.Color = Color3.fromRGB(78, 164, 255)	
+					else
+						NewBolt.Color = Color3.fromRGB(147, 214, 255)
+					end
+
+
+					local NewSparks = LightningSparks.new(NewBolt, 5)
+					NewSparks.MinDistance = 25
+					NewSparks.MaxDistance = 30
+				end
+			end)
+		end
+		local ShakePower = math.clamp(plr:DistanceFromCharacter(Item2), 0, 200)
+		local ShakeSub = (200 - ShakePower)/200
+		local hum = plr.Character.Humanoid
+		local camoffset = hum.CameraOffset
+		for i = 1,10 do
+			local Num = 40
+			Tween:Create(hum, TweenInfo.new(0.05, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, true), {CameraOffset = Vector3.new(math.random(-Num,Num)/20 * ShakeSub, math.random(-Num,Num)/10 * ShakeSub, math.random(-Num,Num)/20 * ShakeSub)}):Play()
+			Num = Num - 4
+			wait(0.1)
+		end
+		hum.CameraOffset = camoffset
+	elseif Item1 == "LightningDragon" then
+		local Object = game.ReplicatedStorage.Goro.Dragon:Clone()
+		Object.Parent = game.Workspace.Visuals
+		Object.CFrame = Item2.CFrame
+		local speed = Item4
+		local pivotCFrame = Item3
+		local ObjectStartCf = Item2.CFrame
+		local timeElapsed = 0
+
+		local rnd = Random.new()
+		local rndCF = CFrame.new(rnd:NextInteger(-70,70),rnd:NextNumber(60,80),rnd:NextNumber(-70,70))
+
+		local duration = (ObjectStartCf.p - pivotCFrame.p).Magnitude / speed
+		local tweenDelay = 0.1
+		local new  = Instance.new("Part")
+		new.CFrame = Object.CFrame * rndCF
+		new.Size = Vector3.new(1,1,1)
+		new.Anchored = true
+		new.CanCollide = false
+		new.Material = Enum.Material.Neon
+		new.Parent = script.Parent
+		game.Debris:AddItem(new, 1)
+
+		timeElapsed = 0
+		while timeElapsed < duration do
+			local progress = timeElapsed / duration
+			local pointAtTimeElapsed = Bezier_Module:QuadraticBezier(progress,ObjectStartCf.p,(ObjectStartCf * rndCF).p, pivotCFrame.p)
+			local lookAt = Bezier_Module:QuadraticBezier(progress+0.01,ObjectStartCf.p,(ObjectStartCf * rndCF).p, pivotCFrame.p)
+
+
+			if timeElapsed == 0 then
+				Object.CFrame = CFrame.new(pointAtTimeElapsed,Bezier_Module:QuadraticBezier(progress+.01,ObjectStartCf.p,(ObjectStartCf * rndCF).p, pivotCFrame.p)) -- Makes the Object face the right way
+			elseif timeElapsed == speed then
+				local tween = Tween:Create(Object,TweenInfo.new(.4),{Transparency = 0}):Play()
+			end
+
+			timeElapsed += speed
+			local tween = Tween:Create(Object,TweenInfo.new(tweenDelay),{CFrame = CFrame.new(pointAtTimeElapsed,lookAt)})
+			tween:Play()
+			wait(tweenDelay)
+		end
+		local A1 = Instance.new("Attachment", Object)
+		A1.WorldPosition = ObjectStartCf.p
+		Object.Size = Vector3.new(0,0,0)
+		Object.Shockwave.Size = Vector3.new(0,0,0)
+		local BoltSound = game.ReplicatedStorage.Goro.Sound2:Clone()
+		BoltSound.Parent = Object
+		BoltSound:Play()
+		game.Debris:AddItem(BoltSound, 5)
+		Object.Size = Vector3.new(0,0,0)
+		Object.Shockwave.Size = Vector3.new(0,0,0)
+		local ForceField = game.ReplicatedStorage.Goro.Radius:Clone()
+		ForceField["Rock Smash Sound effect"]:Play()
+		ForceField.CFrame = CFrame.new(Item3.p)
+		ForceField.Name = "fqfeda"
+		ForceField.Anchored = true
+		ForceField.Transparency = -2
+		ForceField.Parent = game.Workspace.Visuals
+		ForceField.Size = Vector3.new(0,0,0)
+		Object.Size = Vector3.new(0,0,0)
+		Object.Shockwave.Size = Vector3.new(0,0,0)
+		Tween:Create(ForceField, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Transparency = 1}):Play()
+		Tween:Create(ForceField.Mesh, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Scale = Vector3.new(30,30,30)}):Play()
+		local Explosion = LightningExplosion.new(ForceField.Position, 2, 17, Color3.new(0.305882, 0.643137, 1), Color3.new(0.388235, 0.686275, 1))
+		game.Debris:AddItem(ForceField, 1)
+		local PointLight2 = Instance.new("PointLight", ForceField)
+		PointLight2.Color = Color3.fromRGB(49, 235, 255)
+		PointLight2.Range = 10
+		PointLight2.Brightness = 100
+		Object.Transparency = 1
+		Object.Shockwave.Size = Vector3.new(0,0,0)
+		local Ring = game.ReplicatedStorage.Goro.Ring:Clone()
+		Ring.Parent = game.Workspace.Visuals
+		Ring.Position = ForceField.Position + Vector3.new(0, 20, 0)
+		Object.Size = Vector3.new(0,0,0)
+		Object.Shockwave.Size = Vector3.new(0,0,0)
+		game.Debris:AddItem(Ring, 0.55)
+		Tween:Create(Ring, TweenInfo.new(0.55, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = Vector3.new(70,4,70), Transparency = 1, Position = Ring.Position - Vector3.new(0, 20, 0)}):Play()
+		Tween:Create(PointLight2, TweenInfo.new(1, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Range = 60, Brightness = 0}):Play()
+		game.Debris:AddItem(PointLight2, 2)
+		delay(speed + 1, function()
+			Object:Destroy()
+		end)
+	elseif Item1 == "Raigo" and Item2 ~= nil and Item3 ~= nil and Item4 ~= nil then
+		for i = 1,45 do
+			local Cloud = game.ReplicatedStorage.Goro.Cloud2:Clone()
+			Cloud.Name = Item2.Name.. "ThunderCloud"
+			Cloud.Parent = game.Workspace.Visuals
+			Cloud.Transparency = 0
+			Cloud.Size = Vector3.new(0,0,0)
+			Cloud.Position = Item2.Position + Vector3.new(math.random(-100,100),math.random(-35,20),math.random(-100,100))
+			Cloud.Orientation = Vector3.new(0, math.random(-360,360), 0)
+			Tween:Create(Cloud, TweenInfo.new(math.random(5,9)/10, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, math.random(1,10)/10), {Size = Vector3.new(math.random(100,200),math.random(30,70),math.random(100,200))}):Play()
+		end
+		local A1 = Instance.new("Attachment", Item4.Parent)
+		A1.Position = Vector3.new(0,-40,0)
+		A1.Visible = false
+		local A2 = Instance.new("Attachment", Item4.Parent)
+		A2.Position = Vector3.new(0,0,0)
+		A2.Visible = false
+		local PointLight = Instance.new("PointLight", A2)
+		local Sound = game.ReplicatedStorage.Goro.DashZap:Clone()
+		Sound.Parent = A2.Parent
+		Sound:Play()
+		game.Debris:AddItem(Sound,1)
+		PointLight.Color = Color3.fromRGB(49, 235, 255)
+		PointLight.Range = 0
+		PointLight.Brightness = 30
+		game.Debris:AddItem(PointLight, 1)
+		Tween:Create(PointLight, TweenInfo.new(0.25), {Range = 60, Brightness = 0}):Play()
+		local NewBolt = LightningBolt.new(A1, A2, 25)
+		NewBolt.CurveSize0, NewBolt.CurveSize1 = 1, 1
+		NewBolt.PulseSpeed = 10
+		NewBolt.Thickness = 1
+		NewBolt.PulseLength = 2
+		NewBolt.FadeLength = 1
+		NewBolt.Color = Color3.fromRGB(78, 164, 255)
+
+		local NewSparks = LightningSparks.new(NewBolt, 20)
+		Item2["Thunder Lightning 9 (SFX)"]:Play()
+		Item2["Electric sound loop"]:Play()
+		Item2.lightning_strike:Play()
+		while true and Item2 and Item2.Value.Value <= 150 and Item2.Value.Value ~= -1 do
+			for i = 1,2 do
+				Tween:Create(Item2, TweenInfo.new(0.05, Enum.EasingStyle.Linear), {Position = Item3 + Vector3.new(0, 0.45 * Item2.Value.Value, 0), Size = Vector3.new(1.05 * Item2.Value.Value, 1.05 * Item2.Value.Value, 1.05 * Item2.Value.Value)}):Play()
+			Tween:Create(Item2.Inner, TweenInfo.new(0.05, Enum.EasingStyle.Linear), {Position = Item3 + Vector3.new(0, 0.45 * Item2.Value.Value, 0), Size = Vector3.new(Item2.Value.Value, Item2.Value.Value, Item2.Value.Value)}):Play()
+			Item2["Thunder Lightning 9 (SFX)"].RollOffMinDistance = Item2.Value.Value
+			Item2["Electric sound loop"].RollOffMinDistance = Item2.Value.Value
+			Item2["Boom"].RollOffMinDistance = Item2.Value.Value * 1.25
+			Item2.lightning_strike.RollOffMinDistance = Item2.Value.Value
+			local A3 = Instance.new("Attachment", Item2)
+			A3.Position = Vector3.new(0,0,0)
+			A3.Visible = false
+			local A4 = Instance.new("Attachment", Item2)
+			A4.Visible = false
+			local randoX = math.random(-Item2.Size.X*1.1,Item2.Size.X*1.1)
+			local randoY = math.random(-Item2.Size.Y*1.1,Item2.Size.Y*1.1)
+			local randoZ = math.random(-Item2.Size.Z*1.1,Item2.Size.Z*1.1)
+			A4.Position = Vector3.new(randoX, randoY, randoZ)
+
+			game.Debris:AddItem(A3,4)
+			game.Debris:AddItem(A4,4)
+
+			local NewBolt = LightningBolt.new(A3, A4, 15)
+			NewBolt.CurveSize0, NewBolt.CurveSize1 = randoX, randoX
+			NewBolt.PulseSpeed = 15
+			NewBolt.Thickness = Item2.Size.X/15
+			NewBolt.AnimationSpeed = 15
+			NewBolt.PulseLength = 2
+			NewBolt.MaxRadius = Item2.Size.X * 0.2
+			NewBolt.MinTransparency = 0
+			NewBolt.MaxTransparency = 0.5
+			NewBolt.FadeLength = 0.25
+			NewBolt.Color = Color3.fromRGB(85, 145, 255)
+
+			local NewSparks = LightningSparks.new(NewBolt)
+			NewSparks.MinDistance = Item2.Size.X * 0.75
+			NewSparks.SparksN = 100
+			NewSparks.MaxDistance = Item2.Size.X
+			end
+			
+			wait(0.05)
+		end
+	elseif Item1 == "RaigoThrow" and Item2 ~= nil and Item3 ~= nil and Item4 ~= nil then
+		local RingCreate = true
+		for _, ItemF in pairs(game.Workspace.Visuals:GetDescendants()) do
+			if ItemF:IsA("MeshPart") and ItemF.Name == Item2.Name.. "ThunderCloud" then
+				Tween:Create(ItemF, TweenInfo.new(math.random(9,10)/10, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, math.random(1,5)/10), {Size = Vector3.new(ItemF.Size.X * 2,0,ItemF.Size.Z * 2), Transparency = 1}):Play()
+				delay(3.2, function()
+					ItemF:Destroy()
+				end)
+			end
+		end	
+		Tween:Create(Item2, TweenInfo.new(Item4, Enum.EasingStyle.Linear), {Position = Item3}):Play()
+		Tween:Create(Item2.Inner, TweenInfo.new(Item4, Enum.EasingStyle.Linear), {Position = Item3}):Play()
+		delay(Item4/1.015, function()
+			for i = 1,20 do
+				delay(i/10, function()
+					local ForceField = game.ReplicatedStorage.Goro.Radius:Clone()
+					ForceField.CFrame = CFrame.new(Item3)
+					ForceField.Anchored = true
+					ForceField.Transparency = -2
+					ForceField.Parent = game.Workspace.Visuals
+					ForceField.Size = Vector3.new(0,0,0)
+					Tween:Create(ForceField, TweenInfo.new(0.25, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Transparency = 1}):Play()
+					Tween:Create(ForceField.Mesh, TweenInfo.new(0.25, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Scale = Vector3.new(Item2.Size.X, Item2.Size.Y, Item2.Size.Z)}):Play()
+					game.Debris:AddItem(ForceField, 0.26)
+					for i = 1,4 do
+						local A3 = Instance.new("Attachment", Item2)
+						A3.Position = Vector3.new(0,0,0)
+						A3.Visible = false
+						local A4 = Instance.new("Attachment", Item2)
+						A4.Visible = false
+						local randoX = math.random(-Item2.Size.X*1,Item2.Size.X*1)
+						local randoY = math.random(-Item2.Size.Y*1,Item2.Size.Y*1)
+						local randoZ = math.random(-Item2.Size.Z*1,Item2.Size.Z*1)
+						A4.Position = Vector3.new(randoX, randoY, randoZ)
+
+						game.Debris:AddItem(A3,4)
+						game.Debris:AddItem(A4,4)
+
+						local NewBolt = LightningBolt.new(A3, A4, 15)
+						NewBolt.CurveSize0, NewBolt.CurveSize1 = randoX, randoX
+						NewBolt.PulseSpeed = 15
+						NewBolt.Thickness = Item2.Size.X/15
+						NewBolt.AnimationSpeed = 15
+						NewBolt.PulseLength = 2
+						NewBolt.MaxRadius = Item2.Size.X * 0.2
+						NewBolt.MinTransparency = 0
+						NewBolt.MaxTransparency = 0.5
+						NewBolt.FadeLength = 0.25
+						NewBolt.Color = Color3.fromRGB(85, 145, 255)
+
+						local NewSparks = LightningSparks.new(NewBolt)
+						NewSparks.MinDistance = Item2.Size.X * 0.75
+						NewSparks.SparksN = 100
+						NewSparks.MaxDistance = Item2.Size.X
+					end
+				end)
+			end
+			Crator.Ground2(Item2.CFrame, Item2.Size.X * 1.1, math.clamp(Item2.Size.X/10, 2, 35), math.clamp(Item2.Size.X, 15, 30), 2, 6)
+			
+			Tween:Create(Item2.Inner, TweenInfo.new(0.5, Enum.EasingStyle.Linear), {Size = Vector3.new(Item2.Size.X * 1.25,Item2.Size.Y * 1.25, Item2.Size.Z * 1.25), Color = Color3.fromRGB(165, 236, 255)}):Play()
+			Item2.Boom:Play()
+			RingCreate = false
+			delay(0.1, function()
+				Item2["Thunder Lightning 9 (SFX)"]:Stop()
+				Item2["Electric sound loop"]:Stop()
+				Item2.lightning_strike:Stop()
+				Item2.Inner.Material = Enum.Material.Neon
+				if Item5 ~= nil then
+					local ray = Ray.new(Item3, Item3 - Vector3.new(0, -Item2.Size * 1.2, 0))
+					local HitPart, HitPos = game.Workspace:FindPartOnRayWithIgnoreList(ray, {game.Workspace.Visuals, plr.Character})
+					Item2.Attachment.WorldPosition = Vector3.new(Item2.Attachment.WorldPosition.X,HitPos.Y - HitPos.Y/2,Item2.Attachment.WorldPosition.Z)
+					Item2.Attachment.Dust.Color = ColorSequence.new(Item5.Color)
+					Item2.Attachment.Dust:Emit(20)
+					Item2.Attachment.Dust.Enabled = true
+					Item2.Attachment.Dust.Size = NumberSequence.new(math.clamp(Item2.Size.X/4, 0, 5), math.clamp(Item2.Size.X/1.5, 0, 50))
+					Item2.Attachment.Dust.Speed = NumberRange.new(math.clamp((Item2.Size.X * 10)/4, 0, 200), math.clamp(Item2.Size.X * 10, 0, 2000))	
+				end
+			end)
+			Tween:Create(Item2, TweenInfo.new(2, Enum.EasingStyle.Quad), {Size = Vector3.new(Item2.Size.X * 2,Item2.Size.Y * 2, Item2.Size.Z * 2), Color = Color3.fromRGB(105, 165, 255)}):Play()
+			Tween:Create(Item2.Inner, TweenInfo.new(2, Enum.EasingStyle.Quad), {Size = Vector3.new(Item2.Size.X * 2,Item2.Size.Y * 2, Item2.Size.Z * 2), Color = Color3.fromRGB(105, 165, 255)}):Play()
+			local Ring = game.ReplicatedStorage.Goro.Ring:Clone()
+			Ring.Parent = game.Workspace.Visuals
+			Ring.CFrame = Item2.CFrame
+			Tween:Create(Ring, TweenInfo.new(0.55, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Size = Vector3.new(2.5 * Item2.Size.X, 0.1 * Item2.Size.Y, 2.5 * Item2.Size.Z), Transparency = 0.5, Position = Item2.Position + Vector3.new(0, Item2.Size.Y/4, 0)}):Play()
+			local Ring2 = game.ReplicatedStorage.Goro.Ring:Clone()
+			Ring2.Parent = game.Workspace.Visuals
+			Ring2.CFrame = Item2.CFrame
+			Tween:Create(Ring2, TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Size = Vector3.new(3.5 * Item2.Size.X, 0.1 * Item2.Size.Y, 3.5 * Item2.Size.Z), Transparency = 1, Position = Item2.Position + Vector3.new(0, Item2.Size.Y/8, 0)}):Play()
+			delay(0.25, function()
+				delay(0.25, function()
+					Tween:Create(Ring, TweenInfo.new(2, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = Vector3.new(0, Item2.Size.Y/20, 0), Transparency = 1, Position = Item2.Position + Vector3.new(0, Item2.Size.Y/1.2, 0)}):Play()
+					game.Debris:AddItem(Ring, 2)
+					game.Debris:AddItem(Ring2, 2)
+				end)
+			end)
+			delay(2, function()
+				Tween:Create(Item2, TweenInfo.new(0.25, Enum.EasingStyle.Bounce), {Size = Vector3.new(0,0,0), Color = Color3.fromRGB(105, 165, 255)}):Play()
+				Tween:Create(Item2.Inner, TweenInfo.new(0.25, Enum.EasingStyle.Bounce), {Size = Vector3.new(0,0,0), Color = Color3.fromRGB(105, 165, 255)}):Play()
+				Item2.Attachment.Dust.Enabled = false
+			end)		
+			local ShakePower = math.clamp(plr:DistanceFromCharacter(Item3), 0, Item2.Size.X * 2.5)
+			local ShakeSub = (Item2.Size.X * 2.5 - ShakePower)/Item2.Size.X * 2.5
+			local hum = plr.Character.Humanoid
+			local camoffset = hum.CameraOffset
+			for i = 1,20 do
+				local Num = 40
+				Tween:Create(hum, TweenInfo.new(0.05, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, true), {CameraOffset = Vector3.new(math.random(-Num,Num)/30 * ShakeSub, math.random(-Num,Num)/30 * ShakeSub, math.random(-Num,Num)/30 * ShakeSub)}):Play()
+				Num = Num - 2
+				wait(0.1)
+			end
+			hum.CameraOffset = camoffset
+		end)	
+		while true and RingCreate == true do
+			local Ring = game.ReplicatedStorage.Goro.Ring:Clone()
+			Ring.Parent = game.Workspace.Visuals
+			Ring.CFrame = CFrame.lookAt(Item2.Position, Item3) * CFrame.Angles(math.rad(-90), math.rad(0), math.rad(0))
+			Tween:Create(Ring, TweenInfo.new(math.clamp(Item2.Size.X/40, 0.05, 1.5), Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = Vector3.new(Ring.Size.X * Item2.Size.X,Ring.Size.Y * Item2.Size.Y, Ring.Size.Z * Item2.Size.Z), Transparency = 1}):Play()
+			game.Debris:AddItem(Ring, 2)
+			wait(math.clamp(Item2.Size.X/200, 0.005, 0.75))
+		end
+	elseif Item1 == "GoroFlight1" and Item2 ~= nil and plr.Name ~= Item2.Name then
+		local A3 = Instance.new("Attachment", Item2.PrimaryPart)
+		A3.Name = "AmongUsAttachmentSuspicious:O"
+		local Particle1 = game.ReplicatedStorage.Goro.Electric2:Clone()
+		Particle1.Parent = A3
+		Particle1.Enabled = true
+		local Particle2 = game.ReplicatedStorage.Goro.Flash:Clone()
+		Particle2.Parent = A3
+		Particle2.Enabled = true
+		for _, ItemF in pairs(Item2:GetDescendants()) do
+			if ItemF:IsA("MeshPart") or ItemF:IsA("Part") or ItemF:IsA("Union") then
+				if ItemF.Name ~= "HumanoidRootPart" then
+					ItemF.Transparency = ItemF.Transparency + 10
+					local ElectricParticle = game.ReplicatedStorage.Goro.ElectricParticle:Clone()
+					ElectricParticle.Enabled = true
+					ElectricParticle.Parent = ItemF	
+				end
+			end
+		end
+	elseif Item1 == "GoroFlight2" and Item2 ~= nil and Item3 ~= nil and plr.Name ~= Item2.Name then
+		local PartDash :Part = Instance.new("Part", workspace.Visuals)
+		PartDash.CFrame = CFrame.new(Item3)
+		PartDash.CanCollide = false
+		PartDash.Anchored = true
+		PartDash.Transparency = 1
+		local A1 = Instance.new("Attachment", PartDash)
+		A1.WorldPosition = Item2
+		A1.Visible = false
+		local A2 = Instance.new("Attachment", PartDash)
+		A2.Visible = false
+		A2.WorldPosition = Item3
+		local Particle1 = game.ReplicatedStorage.Goro.Electric2:Clone()
+		Particle1.Parent = A2
+		local Particle2 = game.ReplicatedStorage.Goro.Flash:Clone()
+		Particle2.Parent = A2
+		local PointLight = Instance.new("PointLight", A2)
+		local Sound = game.ReplicatedStorage.Goro.DashZap:Clone()
+		Sound.Parent = PartDash
+		Sound:Play()
+		game.Debris:AddItem(Sound,1)
+		PointLight.Color = Color3.fromRGB(49, 235, 255)
+		PointLight.Range = 0
+		PointLight.Brightness = 30
+		game.Debris:AddItem(PointLight, 1)
+		game.Debris:AddItem(PartDash, 1)
+
+		local Distance = 15
+		Tween:Create(PointLight, TweenInfo.new(0.4), {Range = Distance, Brightness = 0}):Play()
+		wait()
+		Particle1:Emit(50)
+
+		local NewBolt = LightningBolt.new(A1, A2, 25)
+		NewBolt.CurveSize0, NewBolt.CurveSize1 = 1, 1
+		NewBolt.PulseSpeed = 10
+		NewBolt.Thickness = 1
+		NewBolt.PulseLength = 2
+		NewBolt.FadeLength = 0.45
+		NewBolt.RanNum = 10
+		NewBolt.Frequency = 5
+		NewBolt.Color = Color3.fromRGB(85, 145, 255)
+		NewBolt.MaxRadius = 4
+		local NewSparks = LightningSparks.new(NewBolt, 20)		
+	elseif Item1 == "GoroFlight3" and Item2 ~= nil and plr.Name ~= Item2.Name then
+		for _, ItemF in pairs(Item2:GetDescendants()) do
+			if ItemF.Name ~= "HumanoidRootPart" then
+				if ItemF:IsA("MeshPart") or ItemF:IsA("Part") or ItemF:IsA("Union") then
+					ItemF.Transparency = ItemF.Transparency - 10
+					if ItemF:FindFirstChild("ElectricParticle") then
+						ItemF.ElectricParticle:Destroy()
+					end
+				elseif ItemF.Name == "AmongUsAttachmentSuspicious:O" then
+					ItemF:FindFirstChild("Flash").Enabled = false
+					ItemF:FindFirstChild("Electric2").Enabled = false
+					game.Debris:AddItem(ItemF, 1)
+				end
+			end
+		end	
+	end
+end)
